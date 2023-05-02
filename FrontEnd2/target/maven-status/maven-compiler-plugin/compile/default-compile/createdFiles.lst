@@ -1,0 +1,8 @@
+ryerson/ca/helper/RestaurantsXML.class
+ryerson/ca/business/XMLParser.class
+ryerson/ca/business/Business.class
+ryerson/ca/frontend/FrontEnd.class
+ryerson/ca/helper/Restaurant.class
+ryerson/ca/frontend/Authenticate.class
+ryerson/ca/helper/FoodItem.class
+ryerson/ca/helper/FoodItemsXML.class
