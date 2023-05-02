@@ -1,0 +1,210 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: viewmenudb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: viewmenudb
+spec:
+  selector:
+    app: viewmenudb
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viewmenudb
+spec:
+  selector:
+    matchLabels:
+      app: viewmenudb
+  template:
+    metadata:
+      labels:
+        app: viewmenudb
+    spec:
+      containers:
+        - name: viewmenudb
+          image: vsatchi/coe692:viewmenudb
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: storage
+              mountPath: /data/viewmenudb
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: viewmenudb-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viewmenu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: viewmenu
+  template:
+    metadata:
+      labels:
+        app: viewmenu
+    spec:
+      containers:
+        - name: viewmenu
+          image: vsatchi/coe692:viewmenuWebApp
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_URL
+              value: viewmenudb:3306
+            - name: kubeMQAddress
+              value: 10.24.14.133:50000
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: viewfooditemdb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: viewfooditemdb
+spec:
+  selector:
+    app: viewfooditemdb
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viewfooditemdb
+spec:
+  selector:
+    matchLabels:
+      app: viewfooditemdb
+  template:
+    metadata:
+      labels:
+        app: viewfooditemdb
+    spec:
+      containers:
+        - name: viewfooditemdb
+          image: vsatchi/coe692:viewfooditemdb
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: storage
+              mountPath: /data/viewfooditemdb
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: viewfooditemdb-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: viewfooditem
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: viewfooditem
+  template:
+    metadata:
+      labels:
+        app: viewfooditem
+    spec:
+      containers:
+        - name: viewfooditem
+          image: vsatchi/coe692:viewfooditemWebApp
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_URL
+              value: viewfooditemdb:3306
+            - name: kubeMQAddress
+              value: 10.24.14.133:50000
+          imagePullPolicy: Always
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: vsatchi/coe692:frontendWebApp
+          ports:
+            - containerPort: 8080
+          env:
+            - name: viewmenuService
+              value: viewmenu:80
+            - name: viewfooditemService
+              value: viewfooditem:80
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: viewmenu
+spec:
+  selector:
+    app: viewmenu
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: viewfooditem
+spec:
+  selector:
+    app: viewfooditem
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
